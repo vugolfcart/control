@@ -55,6 +55,17 @@ def callback(data):
     msg.pid_vel = vel
     pub.publish(msg)
 
+def callback2(data):
+	theta = 135;
+    a = getRange(data, theta)
+    b = getRange(data, 0)
+
+    error = a
+
+    msg = pid_input()
+    msg.pid_error = error
+    msg.pid_vel = vel
+    pub.publish(msg)
     
     
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 import rospy
-from race.msg import drive_values
-from race.msg import drive_param
+from f1tenths_controller.msg import drive_values
+from f1tenths_controller.msg import drive_param
 from std_msgs.msg import Bool
 
 pub = rospy.Publisher('drive_pwm', drive_values, queue_size=10)

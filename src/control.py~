@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 import rospy
-from f1tenths_controller.msg import drive_param
-from f1tenths_controller.msg import pid_input
+from f1tenths-controller.msg import drive_param
+from f1tenths-controller.msg import pid_input
 from std_msgs.msg import String
 import math
 

@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+
+<launch>
+  
+    <!-- LIDAR -->
+    <node name="urg_node" pkg="urg_node" type="urg_node">
+	<param name="ip_address" value="192.168.1.11"/>
+	</node>
+
+<!-- arduino -->
+<node name="serial" pkg="rosserial_python" type="serial_node.py" args="/dev/ttyACM0"/>
+
+<node name="talker" pkg="f1tenths_controller" type="talker.py"/>
+<node name="control" pkg="f1tenths_controller" type="control.py"/>
+<node name="dist_finder" pkg="f1tenths_controller" type="dist_finder.py"/>
+
+
+</launch>
