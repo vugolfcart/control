@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
 import rospy
-from f1tenths_controller.msg import drive_param
-from f1tenths_controller.msg import pid_input
+from control.msg import drive_param
+from control.msg import pid_input
 from std_msgs.msg import String
 import math
 
-pub = rospy.Publisher('drive_parameters', drive_param, queue_size=1)
+pub = rospy.Publisher('control_drive_parameters', drive_param, queue_size=1)
 
 kp = 14.0 * 2
 kd = 0.09 * 2
@@ -56,7 +56,7 @@ def update_mode(_mode):
 
 if __name__ == '__main__':
     print("Listening to error for PID")
-    rospy.init_node('pid_controller', anonymous=True)
+    rospy.init_node('control_pid_controller', anonymous=True)
     rospy.Subscriber('error', pid_input, control)
     rospy.Subscriber('mode', String, update_mode)
     rospy.spin()

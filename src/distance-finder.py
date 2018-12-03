@@ -3,7 +3,7 @@
 import rospy
 import math
 from sensor_msgs.msg import LaserScan
-from f1tenths_controller.msg import pid_input
+from control.msg import pid_input
 
 desired_trajectory = .5
 vel = 5
@@ -60,6 +60,6 @@ def callback(data):
 
 if __name__ == '__main__':
     print("Laser node started")
-    rospy.init_node('dist_finder',anonymous = True)
+    rospy.init_node('control_distance_finder',anonymous = True)
     rospy.Subscriber("scan",LaserScan,callback)
     rospy.spin()

@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>f1tenths_controller</name>
+  <name>control</name>
   <version>0.0.0</version>
-  <description>The f1tenths_controller package</description>
+  <description>ROS control package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
@@ -36,8 +36,6 @@
   <run_depend>sensor_msgs</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>geometry_msgs</run_depend>
-  
-
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

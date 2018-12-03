@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
-from f1tenths_controller.msg import drive_param
+from control.msg import drive_param
 import curses
 #import signal
 #TIMEOUT = 0.1 # number of seconds your want for timeout
@@ -31,8 +31,8 @@ left = 0;
 stdscr = curses.initscr()
 curses.cbreak()
 stdscr.keypad(1)
-rospy.init_node('keyboard_talker', anonymous=True)
-pub = rospy.Publisher('drive_parameters', drive_param, queue_size=10)
+rospy.init_node('control_keyboard_talker', anonymous=True)
+pub = rospy.Publisher('control_drive_parameters', drive_param, queue_size=10)
 
 # set alarm
 #signal.alarm(TIMEOUT)

@@ -8,7 +8,7 @@ stdscr = curses.initscr()
 curses.cbreak()
 stdscr.keypad(1)
 rospy.init_node('kill_switch', anonymous=True)
-em_pub = rospy.Publisher('eStop', Bool, queue_size=10)
+em_pub = rospy.Publisher('control_emergency_stop', Bool, queue_size=10)
 
 stdscr.refresh()
 
