@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(f1tenths_controller)
+project(control)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -9,9 +9,9 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   std_msgs
-  message_generation
   geometry_msgs
   tf
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -52,7 +52,7 @@ find_package(catkin REQUIRED COMPONENTS
 		FILES
 		drive_param.msg
 		drive_values.msg
-    pid_input.msg
+        pid_input.msg
 	)
 
 ## Generate services in the 'srv' folder
@@ -106,8 +106,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES f1tenths_controller
-  CATKIN_DEPENDS roscpp rospy sensor_msgs std_msgs geometry_msgs
+#  LIBRARIES control
+  CATKIN_DEPENDS message_runtime roscpp rospy sensor_msgs std_msgs geometry_msgs
 #  DEPENDS system_lib
 )
 
@@ -123,17 +123,17 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(f1tenths_controller
-#   src/${PROJECT_NAME}/f1tenths_controller.cpp
+# add_library(control
+#   src/${PROJECT_NAME}/control.cpp
 # )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(f1tenths_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(control ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-# add_executable(f1tenths_controller src/f1tenths_controller.cpp)
+# add_executable(control src/control.cpp)
 # add_executable(odom_scan_matcher src/getOdomFromMatcher.cpp)
 # add_executable(hectorOdom src/hectorOdom.cpp)
 # add_executable(amclOdom src/amclOdom.cpp)
@@ -141,8 +141,7 @@ include_directories(
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(f1tenths_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
+# add_dependencies(control ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 
 ## Specify libraries to link a library or executable target against
@@ -174,7 +173,7 @@ include_directories(
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS f1tenths_controller f1tenths_controller
+# install(TARGETS control control
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -199,7 +198,7 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_f1tenths_controller.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_control.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

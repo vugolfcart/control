@@ -13,8 +13,8 @@ int pwm_center_value = 9830; //  15% duty cycle
 int pwm_lowerlimit = 6554;   //  10% duty cycle
 int pwm_upperlimit = 13108;  //  20% duty cycle
 
-int servoPin = 5;
-int motorPin = 6;
+int servoPin = 6;
+int motorPin = 5;
 
 std_msgs::Int32 str_msg;
 ros::Publisher chatter("chatter", &str_msg);
