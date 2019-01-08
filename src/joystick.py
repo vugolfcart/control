@@ -14,6 +14,7 @@ stdscr.keypad(1)
 stdscr.refresh()
 
 angle = 0
+velocity = 0
 increment = 4
 
 
@@ -25,24 +26,10 @@ def offhook():
     control_drive_parameters.publish(message)
 
 
-# def on_frame(data):
-#     global angle
-    # print(data)
-
-    # message = drive_param()
-    # message.velocity = 30
-    # message.angle = angle
-    # control_drive_parameters.publish(message)
-
-    # unique_timestamp = (''.join(str(time()).split('.')))[:15]
-    # filename = '{}.json'.format(unique_timestamp, angle)
-    # stdscr.addstr(1, 0, 'outputting to: {}'.format(filename))
-
-
 def main():
     rospy.on_shutdown(offhook)
     global angle
-    # rospy.Subscriber('control_drive_parameters', drive_param, on_frame)
+    global velocity
 
     key = ''
     while key != ord('q'):
@@ -50,15 +37,20 @@ def main():
         stdscr.refresh()
         if key == curses.KEY_LEFT and angle > -100 + increment:
             angle -= increment
-            stdscr.addstr(0, 0, "angle")
-            stdscr.addstr(0, 6, '%3.2f' % angle)
         elif key == curses.KEY_RIGHT and angle < 100 - increment:
             angle += increment
-            stdscr.addstr(0, 0, "angle")
-            stdscr.addstr(0, 6, '%3.2f' % angle)
+        elif key == curses.KEY_UP and velocity < 100 + increment:
+            velocity += increment
+        elif key == curses.KEY_DOWN and velocity > -100 + increment:
+            velocity -= increment
+
+        stdscr.addstr(0, 0, "angle: ")
+        stdscr.addstr(0, 7, '%3.2f' % angle)
+        stdscr.addstr(1, 0, "velocity: ")
+        stdscr.addstr(1, 10, '%3.2f' % velocity)
 
         message = drive_param()
-        message.velocity = 27
+        message.velocity = velocity
         message.angle = angle
         control_drive_parameters.publish(message)
 
