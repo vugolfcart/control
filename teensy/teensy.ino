@@ -13,6 +13,8 @@ int pwm_center_value = 9830; //  15% duty cycle
 int pwm_lowerlimit = 6554;   //  10% duty cycle
 int pwm_upperlimit = 13108;  //  20% duty cycle
 
+f1tenths_controller::drive_values prev_pwm;
+
 int servoPin = 6;
 int motorPin = 5;
 
@@ -26,18 +28,22 @@ void messageDrive(const f1tenths_controller::drive_values &pwm) {
   if (!flagStop) {
     str_msg.data = pwm.pwm_drive;
     chatter.publish(&str_msg);
+    if ((prev_pwm.pwm_drive < pwm_center_value) != (pwm.pwm_drive < pwm_center_value)) {
+      analogWrite(motorPin, pwm_center_value);
+      // delay(1)
+    }
 
-    if (pwm.pwm_drive < pwm_lowerlimit) {
+    if (pwm.pwm_angle < pwm_lowerlimit) {
       analogWrite(servoPin, pwm_lowerlimit); //  Safety lower limit
-    } else if (pwm.pwm_drive > pwm_upperlimit) {
+    } else if (pwm.pwm_angle > pwm_upperlimit) {
       analogWrite(servoPin, pwm_upperlimit); //  Safety upper limit
     } else {
       analogWrite(servoPin, pwm.pwm_drive); //  Incoming data
     }
 
-    if (pwm.pwm_angle < pwm_lowerlimit) {
+    if (pwm.pwm_drive < pwm_lowerlimit) {
       analogWrite(motorPin, pwm_lowerlimit); //  Safety lower limit
-    } else if (pwm.pwm_angle > pwm_upperlimit) {
+    } else if (pwm.pwm_drive > pwm_upperlimit) {
       analogWrite(motorPin, pwm_upperlimit); //  Safety upper limit
     } else {
       analogWrite(motorPin, pwm.pwm_angle); //  Incoming data
@@ -65,6 +71,8 @@ void setup() {
   analogWriteResolution(16);
   analogWrite(servoPin, pwm_center_value);
   analogWrite(motorPin, pwm_center_value);
+  prev_pwm.pwm_angle = pwm_center_value;
+  prev_pwm.pwm_drive = pwm_center_value;
   pinMode(13, OUTPUT);
   digitalWrite(13, HIGH);
   pinMode(2, INPUT);
