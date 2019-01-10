@@ -5,16 +5,16 @@ import rospy
 import numpy
 from control.msg import drive_param
 from sensor_msgs.msg import LaserScan
-targetdist = 1
+targetdist = 0.55
 
-max_fwd_speed = 30
+max_fwd_speed = 40
 min_fwd_speed = 25
 max_rev_speed = -30
 min_rev_speed = -25
 max_left_angle = -60
 max_right_angle = 60
 
-kp = [5, 10]
+kp = [25, 30]
 ki = [0, 0]
 kd = [0.09, 0.25]
 
