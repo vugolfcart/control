@@ -28,11 +28,14 @@ void messageDrive(const f1tenths_controller::drive_values &pwm) {
   if (!flagStop) {
     str_msg.data = pwm.pwm_drive;
     chatter.publish(&str_msg);
+    
     if ((prev_pwm.pwm_drive < pwm_center_value) != (pwm.pwm_drive < pwm_center_value)) {
       analogWrite(motorPin, pwm_center_value);
       // delay(1)
     }
-
+    
+    prev_pwm = pwm;
+    
     if (pwm.pwm_angle < pwm_lowerlimit) {
       analogWrite(servoPin, pwm_lowerlimit); //  Safety lower limit
     } else if (pwm.pwm_angle > pwm_upperlimit) {
