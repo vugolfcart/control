@@ -5,7 +5,9 @@ import rospy
 import numpy
 from control.msg import drive_param
 from sensor_msgs.msg import LaserScan
+
 targetdist = 0.55
+sidetargetdist = 0.5
 
 max_fwd_speed = 40
 min_fwd_speed = 25
@@ -32,10 +34,8 @@ def offhook():
     pub.publish(msg)
 
 def getRange(data, theta):
-    distance = [0, 0, 0]
-    for i in range(3):
-        step = int(theta[i]/data.angle_increment)
-        distance[i] = data.ranges[step]
+    step = [int(i/data.angle_increment) for i in theta]
+    distance = [data.ranges[i] for i in step]
     return distance
 
 
@@ -50,17 +50,38 @@ def callback(data):
 
     angle_range = data.angle_max - data.angle_min
 
-    forward = 0.5 * angle_range
-    left = 0.4 * angle_range
-    right = 0.6 * angle_range
-    angles = [left, forward, right]
+    cur_error = 0
+    cur_angle_error = 0
+    
+    if (True): 
+        right = 0.4 * angle_range
+        forward = 0.5 * angle_range
+        left = 0.6 * angle_range
+        angles = [forward, left, right]
+        
+        actualdist = getRange(data, angles)
 
-    actualdist = getRange(data, angles)
+        cur_error =  actualdist[0] - targetdist
+    	cur_angle_error = actualdist[1] - actualdist[2]
+        print ('distances: [%s]' % ', '.join(map(str, actualdist)))
+	
+    else:
+        angle1 = 0
+        angle2 = 50
+        swing = math.radians(angle2 - angle1)
+        forward = 0.5 * angle_range
+        angles = [forward, angle1, angle2]
 
-    print('dist: %f, %f, %f' % (actualdist[0], actualdist[1], actualdist[2]))
-
-    cur_error =  actualdist[1] - targetdist
-    cur_angle_error = actualdist[0] - actualdist[2]
+        actualdist = getRange(data, angles)
+        
+        alpha = math.atan2((actualdist[2] * math.cos(swing)) - actualdist[1], actualdist[2] * math.sin(swing))
+        AB = actualdist[1] * math.cos(alpha)
+        AC = 1
+        CD = AB + (AC * math.sin(alpha))
+        
+        cur_error =  actualdist[0] - targetdist
+        cur_angle_error = -1*(CD - sidetargetdist)
+        print ('distances: [%s]' % ', '.join(map(str, actualdist)))
 
     d_time = 1
     d_error = prev_error - cur_error
@@ -77,11 +98,11 @@ def callback(data):
     i_a_value = ki[1]*sum_angle_error
     d_a_value = kd[1]*(d_angle_error/d_time)
 
-
     # print ('P: {}, I: {}, D: {}'.format(p_value, i_value, d_value))
     # print ('cur_error: {}, prev_error: {}, sum_error: {}'.format(cur_error, prev_error, sum_error))
 
     prev_error = cur_error
+    prev_angle_error = cur_angle_error
 
     speed = p_value + i_value + d_value
     speed = max(min(speed, max_fwd_speed), max_rev_speed)
