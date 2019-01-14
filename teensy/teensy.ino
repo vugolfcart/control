@@ -28,21 +28,11 @@ void messageDrive(const control::drive_values &pwm) {
     return;
   }
 
-  if (pwm.pwm_angle < PWM_LOWER) {
-    analogWrite(SERVO_PIN, PWM_LOWER);
-  } else if (pwm.pwm_angle > PWM_HIGHER) {
-    analogWrite(SERVO_PIN, PWM_HIGHER);
-  } else {
-    analogWrite(SERVO_PIN, pwm.pwm_drive);
-  }
+  int safe_pwm_angle = min(PWM_HIGHER, max(PWM_LOWER, pwm.pwm_angle));
+  int safe_pwm_drive = min(PWM_HIGHER, max(PWM_LOWER, pwm.pwm_drive));
 
-  if (pwm.pwm_drive < PWM_LOWER) {
-    analogWrite(MOTOR_PIN, PWM_LOWER);
-  } else if (pwm.pwm_drive > PWM_HIGHER) {
-    analogWrite(MOTOR_PIN, PWM_HIGHER);
-  } else {
-    analogWrite(MOTOR_PIN, pwm.pwm_angle);
-  }
+  analogWrite(SERVO_PIN, safe_pwm_drive);
+  analogWrite(MOTOR_PIN, safe_pwm_angle);
 }
 
 void messageEmergencyStop(const std_msgs::Bool &flag) {
