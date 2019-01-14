@@ -2,30 +2,35 @@
 
 import math
 import rospy
-import numpy
+import argparse
 from control.msg import drive_param
 from sensor_msgs.msg import LaserScan
 
-targetdist = 0.55
-sidetargetdist = 0.5
+parser = argparse.ArgumentParser(description='PID control choose dist, speed, angle, and mode')
+parser.add_argument("max_dist", type=float, help="Maximum Distance")
+parser.add_argument("max_speed", type=int, help="Maximum Speed from 0 to 100")
+parser.add_argument("max_angle", type=int, help="Maximum Steering Angle from 0 to 100")
+parser.add_argument("mode", type=str, choices=['centering', 'following'], help="self centering or wall following")
+args = parser.parse_args()
 
-max_fwd_speed = 40
-min_fwd_speed = 25
-max_rev_speed = -30
-min_rev_speed = -25
-max_left_angle = -60
-max_right_angle = 60
+fwd_target_dist = args.max_dist
+side_target_dist = args.max_dist
 
-kp = [25, 30]
-ki = [0, 0]
-kd = [0.09, 0.25]
+max_speed = args.max_speed
+max_angle = args.max_angle
 
-prev_error = 0
-sum_error = 0
+speed_pid = [25, 0, 0.09]
+angle_pid = [30, 0, 0.25]
+
+prev_dist_error = 0
+sum_dist_error = 0
 prev_angle_error = 0
 sum_angle_error = 0
 
+mode = args.mode
+
 pub = rospy.Publisher('control_drive_parameters', drive_param, queue_size=1)
+
 
 def offhook():
     msg = drive_param()
@@ -33,82 +38,92 @@ def offhook():
     msg.angle = 0
     pub.publish(msg)
 
-def getRange(data, theta):
+
+def getrange(data, theta):
     step = [int(i/data.angle_increment) for i in theta]
     distance = [data.ranges[i] for i in step]
     return distance
 
 
+def calculateresponse(cur_error=0, sum_error=0, dif_error=0, param='none'):
+    if param == 'speed':
+        pid = speed_pid
+    elif param == 'angle':
+        pid = angle_pid
+    else:
+        pid = [0, 0, 0]
+
+    p_value = pid[0]*cur_error
+    i_value = pid[1]*sum_error
+    d_value = pid[2]*dif_error
+
+    correction = p_value + i_value + d_value
+
+    return correction
+
+
+def calculateerror(cur_error=0, prev_error=0, sum_error=0):
+    d_time = 1
+    sum_error += cur_error * d_time
+    dif_error = ((prev_error - cur_error) / d_time)
+    return sum_error, dif_error
+
+
 def callback(data):
+    global prev_angle_error
+    global prev_dist_error
+    global sum_angle_error
+    global sum_dist_error
 
     rospy.on_shutdown(offhook)
 
-    global prev_error
-    global sum_error
-    global prev_angle_error
-    global sum_angle_error
-
     angle_range = data.angle_max - data.angle_min
 
-    cur_error = 0
+    cur_dist_error = 0
     cur_angle_error = 0
-    
-    if (True): 
+
+    forward = 0.5 * angle_range
+    actual_dists = [0, 0, 0]
+
+    if mode == 'centering':
         right = 0.4 * angle_range
-        forward = 0.5 * angle_range
         left = 0.6 * angle_range
         angles = [forward, left, right]
         
-        actualdist = getRange(data, angles)
+        actual_dists = getrange(data, angles)
 
-        cur_error =  actualdist[0] - targetdist
-    	cur_angle_error = actualdist[1] - actualdist[2]
-        print ('distances: [%s]' % ', '.join(map(str, actualdist)))
-	
+        cur_angle_error = actual_dists[1] - actual_dists[2]
+
     else:
         angle1 = 0
         angle2 = 50
-        swing = math.radians(angle2 - angle1)
-        forward = 0.5 * angle_range
         angles = [forward, angle1, angle2]
 
-        actualdist = getRange(data, angles)
-        
-        alpha = math.atan2((actualdist[2] * math.cos(swing)) - actualdist[1], actualdist[2] * math.sin(swing))
-        AB = actualdist[1] * math.cos(alpha)
+        actual_dists = getrange(data, angles)
+
+        swing = math.radians(angle2 - angle1)
+
+        alpha = math.atan2((actual_dists[2] * math.cos(swing)) - actual_dists[1], actual_dists[2] * math.sin(swing))
+        AB = actual_dists[1] * math.cos(alpha)
         AC = 1
         CD = AB + (AC * math.sin(alpha))
         
-        cur_error =  actualdist[0] - targetdist
-        cur_angle_error = -1*(CD - sidetargetdist)
-        print ('distances: [%s]' % ', '.join(map(str, actualdist)))
+        cur_angle_error = -1*(CD - side_target_dist)
 
-    d_time = 1
-    d_error = prev_error - cur_error
-    sum_error += cur_error * d_time
+    cur_dist_error = actual_dists[0] - fwd_target_dist
+    print ('distances: [%s]' % ', '.join(map(str, actual_dists)))
 
-    p_value = kp[0]*cur_error
-    i_value = ki[0]*sum_error
-    d_value = kd[0]*(d_error/d_time)
+    sum_dist_error, dif_dist_error = calculateerror(cur_dist_error, prev_dist_error, sum_dist_error)
+    sum_angle_error, dif_angle_error = calculateerror(cur_angle_error, prev_angle_error, sum_angle_error)
 
-    d_angle_error = prev_angle_error - cur_angle_error
-    sum_angle_error += cur_angle_error * d_time
+    speed = calculateresponse(cur_dist_error, sum_dist_error, dif_dist_error, 'speed')
+    angle = calculateresponse(cur_angle_error, sum_angle_error, dif_dist_error, 'angle')
 
-    p_a_value = kp[1]*cur_angle_error
-    i_a_value = ki[1]*sum_angle_error
-    d_a_value = kd[1]*(d_angle_error/d_time)
-
-    # print ('P: {}, I: {}, D: {}'.format(p_value, i_value, d_value))
-    # print ('cur_error: {}, prev_error: {}, sum_error: {}'.format(cur_error, prev_error, sum_error))
-
-    prev_error = cur_error
+    prev_dist_error = cur_dist_error
     prev_angle_error = cur_angle_error
 
-    speed = p_value + i_value + d_value
-    speed = max(min(speed, max_fwd_speed), max_rev_speed)
-
-    angle = p_a_value + i_a_value + d_a_value
-    angle = min(max(angle, max_left_angle), max_right_angle)
+    speed = max(min(speed, max_speed), -1*max_speed)
+    angle = min(max(angle, -1*max_angle), max_angle)
 
     msg = drive_param()
     msg.velocity = speed
