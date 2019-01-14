@@ -15,7 +15,7 @@ stdscr.refresh()
 
 angle = 0
 velocity = 0
-increment = 4
+increment = 20
 
 
 def offhook():
