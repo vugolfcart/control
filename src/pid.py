@@ -41,7 +41,9 @@ def offhook():
 
 def getrange(data, theta):
     step = [int(i/data.angle_increment) for i in theta]
+    print('step', step)
     distance = [data.ranges[i] for i in step]
+    print('distance', distance)
     return distance
 
 
@@ -77,8 +79,9 @@ def callback(data):
 
     rospy.on_shutdown(offhook)
 
+    #angle_range = math.degrees(data.angle_max - data.angle_min)
     angle_range = data.angle_max - data.angle_min
-
+    print('angle ranges', angle_range)
     cur_dist_error = 0
     cur_angle_error = 0
 
@@ -89,14 +92,14 @@ def callback(data):
         right = 0.4 * angle_range
         left = 0.6 * angle_range
         angles = [forward, left, right]
-        
+        print('angles', angles)
         actual_dists = getrange(data, angles)
 
-        cur_angle_error = actual_dists[1] - actual_dists[2]
+        cur_angle_error = actual_dists[2] - actual_dists[1]
 
     else:
-        angle1 = 0
-        angle2 = 50
+        angle1 = math.radians(45)
+        angle2 = math.radians(60)
         angles = [forward, angle1, angle2]
 
         actual_dists = getrange(data, angles)
@@ -107,7 +110,7 @@ def callback(data):
         AB = actual_dists[1] * math.cos(alpha)
         AC = 1
         CD = AB + (AC * math.sin(alpha))
-        
+
         cur_angle_error = -1*(CD - side_target_dist)
 
     cur_dist_error = actual_dists[0] - fwd_target_dist
@@ -123,7 +126,10 @@ def callback(data):
     prev_angle_error = cur_angle_error
 
     speed = max(min(speed, max_speed), -1*max_speed)
-    angle = min(max(angle, -1*max_angle), max_angle)
+    if speed < 0:
+        speed *= 10
+    #min max
+    angle = max(min(angle, max_angle), -1*max_angle)
 
     msg = drive_param()
     msg.velocity = speed
