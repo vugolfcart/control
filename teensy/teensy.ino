@@ -9,11 +9,12 @@
 int PWM_CENTER = 9830; //  15% duty cycle
 int PWM_LOWER = 6554;   //  10% duty cycle
 int PWM_HIGHER = 13108;  //  20% duty cycle
-int SERVO_PIN = 6;
-int MOTOR_PIN = 5;
+int SERVO_PIN = 5;
+int MOTOR_PIN = 6;
 int KILL_PIN = 2;
-unsigned long duration = 0;
 boolean emergency_stop = false;
+
+control::drive_values previous;
 
 void messageDrive(const control::drive_values &pwm);
 void messageEmergencyStop(const std_msgs::Bool &flag);
@@ -28,11 +29,26 @@ void messageDrive(const control::drive_values &pwm) {
     return;
   }
 
-  int safe_pwm_angle = min(PWM_HIGHER, max(PWM_LOWER, pwm.pwm_angle));
-  int safe_pwm_drive = min(PWM_HIGHER, max(PWM_LOWER, pwm.pwm_drive));
+  // required delay between forward and backward motion:
+  // 1. write a small negative value and pause
+  // 2. write the center value and pause
+  // 3. execute desired negative velocity
+  if (pwm.pwm_drive < PWM_CENTER && previous.pwm_drive >= PWM_CENTER) {
+    analogWrite(MOTOR_PIN, PWM_CENTER - 150);
+    delay(30);
+    analogWrite(MOTOR_PIN, PWM_CENTER);
+    delay(30);
+  }
 
-  analogWrite(SERVO_PIN, safe_pwm_drive);
-  analogWrite(MOTOR_PIN, safe_pwm_angle);
+  control::drive_values safe;
+  safe.pwm_angle = min(PWM_HIGHER, max(PWM_LOWER, pwm.pwm_angle));
+  safe.pwm_drive = min(PWM_HIGHER, max(PWM_LOWER, pwm.pwm_drive));
+
+  analogWrite(SERVO_PIN, safe.pwm_angle);
+  analogWrite(MOTOR_PIN, safe.pwm_drive);
+
+  previous.pwm_angle = safe.pwm_angle;
+  previous.pwm_drive = safe.pwm_drive;
 }
 
 void messageEmergencyStop(const std_msgs::Bool &flag) {
@@ -56,10 +72,15 @@ void setup() {
   nh.initNode();
   nh.subscribe(control_serial_drive_parameters);
   nh.subscribe(control_emergency_stop);
+
+  previous.pwm_angle = PWM_CENTER;
+  previous.pwm_drive = PWM_CENTER;
 }
 
 void loop() {
   nh.spinOnce();
+
+  unsigned long duration = 0;
   duration = pulseIn(KILL_PIN, HIGH, 30000);
   while (duration > 1900) {
     duration = pulseIn(KILL_PIN, HIGH, 30000);
