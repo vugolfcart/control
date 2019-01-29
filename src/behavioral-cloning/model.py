@@ -7,9 +7,11 @@ from keras.models import Sequential
 from keras.layers import Conv2D, Cropping2D, Dense, Dropout, Flatten, Lambda, MaxPooling2D
 import rosbag
 import argparse
+from cv_bridge import CvBridge, CvBridgeError
 
 
 def get_data(path):
+    bridge = CvBridge()
     bag = rosbag.Bag(path)
     topics = [
         '/zed/rgb/image_rect_color',
@@ -23,24 +25,32 @@ def get_data(path):
     labels = []
 
     for topic, message, timestamp in bag.read_messages(topics=topics):
-        print '{}: [{}]: {}'.format(timestamp, topic, '')
+        print('{}: [{}]: {}'.format(timestamp, topic, ''))
 
         if topic == '/zed/rgb/image_rect_color':
             count += 1
 
-            data = np.array(map(ord, message.data), dtype=np.uint8)
-            image = data.reshape(message.height, message.width, 3)
+            try:
+                image = bridge.imgmsg_to_cv2(message)
 
-            # BGR -> RGB
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            image = image[188:, 0:672, 0:3]
-            image = cv2.resize(image, (320, 160))
+                # crop and resize
+                image = image[188:, 0:672, 0:3]
+                image = cv2.resize(image, (320, 160))
 
-            print '[{}] height={} width={}'.format(count, message.height, message.width)
-            print 'shape={}'.format(image.shape)
+                # convert to grayscale
+                weights = [1, 0, 0] # BGR (standard luminescence: [0.114, 0.587, 0.299])
+                weights = np.array([weights]).reshape((1,3))
+                image = cv2.transform(image, weights)
 
-            images.append(image)
-            labels.append(angle)
+                cv2.imshow('image', image)
+                cv2.waitKey(0)
+
+                print('[{}] message=({}, {}), shape=({})'.format(count, message.height, message.width, image.shape))
+
+                images.append(image)
+                labels.append(angle)
+            except CvBridgeError as e:
+                print(e)
 
         elif topic == '/control_drive_parameters':
             angle = message.angle
