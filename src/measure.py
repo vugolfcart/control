@@ -47,7 +47,7 @@ def ready(meas_dist):
     global started
 
     start_time = time.time()
-    start_dist = meas_dist[0]
+    start_dist = meas_dist
     started = True
 
 
@@ -62,21 +62,25 @@ def finished():
 def callback(data):
     global msg
     rospy.on_shutdown(offhook)
-    distance = getrange(data, 0.5*(data.angle_max-data.angle_min))
 
-    if not started:
-        ready(distance[0])
+    center_radians = 0.5 * (data.angle_max - data.angle_min)
+    center_index = int(center_radians / data.angle_increment)
+    distance = data.ranges[center_index]
 
-    dif = distance[0] - start_dist
+    # print('measured_dist = {}'.format(measured_dist))
+    # print('distance = {}'.format(distance))
+    # print('started = {}'.format(started))
+    # print('start_dist = {}'.format(start_dist))
 
-    if (started and not finished) and dif < measured_dist:
+    if not started and distance >= measured_dist:
+        ready(distance)
+        msg.angle = 9
         msg.velocity = speed
         pub.publish(msg)
-    elif (started and not finished) and dif >= measured_dist:
-        msg.velocity = 0
-        pub.publish(msg)
+
+    difference = start_dist - distance
+    if (started and not ended) and difference >= measured_dist:
         finished()
-    elif started and ended:
         msg.velocity = 0
         pub.publish(msg)
         print ('Velocity:', (measured_dist/elapsed_time))
